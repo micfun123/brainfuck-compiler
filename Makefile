@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS := -std=c11 -Wall -Wextra
+CFLAGS := -std=c11 -Wall -Wextra -m32
 OUT := bfc
 
 all:

@@ -11,10 +11,10 @@
 #warning "This software has only been tested on a Unix system."
 #endif
 
-// TODO add more support
+// TODO add ARM support
 #ifndef __x86_64__
 #ifndef __i386__
-#error "This compiler currently only compiles to x86."
+#warning "This software has only been tested when compiled to x86"
 #endif
 #endif
 
