@@ -1,4 +1,4 @@
-# Brainfuck Compiler
+# Brainfuck Compiler (WIP)
 A brainfuck compiler written in C11
 
 I made this project as a quick showcase of my C programming
