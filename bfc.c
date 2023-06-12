@@ -1,27 +1,44 @@
 #include "bfc.h"
 
+// TODO test on clang
+#ifndef __GNUC__
+#warning "This software has only been built and tested with GCC."
+#endif
+
+// TODO test on windows with mingw
+#ifndef __unix__
+#warning "This software has only been tested on a Unix system."
+#endif
+
+// TODO add more support
+#ifndef __x86_64__
+#ifndef __i386__
+#error "This compiler currently only compiles to x86."
+#endif
+#endif
+
 // TODO maybe clean these up
 #if defined(CASSERT)
     #undef CASSERT
 #endif
-#define CASSERT(exp) do{if(!(exp)){fprintf(stderr,"%s:%d failed assert '%s'\n",__FILE__,__LINE__,#exp);exit(1);}}while(0)
-#define CASSERT_CLEANUP(exp, cleanup) do{if(!(exp)){fprintf(stderr,"%s:%d failed assert '%s'\n",__FILE__,__LINE__,#exp);cleanup;}}while(0)
-#define CASSERT_MSG(exp, msg) do{if(!(exp)){fprintf(stderr,"%s\n",msg);exit(1);}}while(0)
-#define CASSERT_MSG_CLEANUP(exp, msg, cleanup) do{if(!(exp)){fprintf(stderr,"%s\n",msg);cleanup;}}while(0)
-#define CASSERT_PRNT(exp, prnt) do{if(!(exp)){prnt;exit(1);}}while(0)
-#define CASSERT_PRNT_CLEANUP(exp, prnt, cleanup) do{if(!(exp)){prnt;cleanup;}}while(0)
+#define CASSERT(exp)                         CASSERT_PRNT_CLEANUP(exp, fprintf(stderr,"%s:%d failed assertion '%s'\n",__FILE__,__LINE__,#exp), exit(1))
+#define CASSERT_CLEANUP(exp,cleanup)         CASSERT_PRNT_CLEANUP(exp, fprintf(stderr,"%s:%d failed assertion '%s'\n",__FILE__,__LINE__,#exp), cleanup)
+#define CASSERT_MSG(exp,msg)                 CASSERT_PRNT_CLEANUP(exp, fprintf(stderr,"%s\n",msg),                                             exit(1))
+#define CASSERT_MSG_CLEANUP(exp,msg,cleanup) CASSERT_PRNT_CLEANUP(exp, fprintf(stderr,"%s\n",msg),                                             cleanup)
+#define CASSERT_PRNT(exp,prnt)               CASSERT_PRNT_CLEANUP(exp, prnt,                                                                   exit(1))
+#define CASSERT_PRNT_CLEANUP(exp,prnt,cleanup) \
+ do { \
+     if( !(exp) ) { \
+         prnt; \
+         cleanup; \
+     } \
+ } while(0)
 
 #define NUM_VALID_CHARS 8
 const char valid_characters[NUM_VALID_CHARS] = "<>+-[].,";
 
 int main(int argc, char* argv[])
 {
-
-    // All pointers to allocated memory are
-    // declared and initialized here to keep
-    // the code clean since not all will be
-    // allocated when they need to be freed
-    // i.e. on error
     char* buffer = NULL;
 
     CASSERT_MSG(argc == 2, "Usage: bfc <INPUT_FILE>");
