@@ -12,10 +12,8 @@
 #endif
 
 // TODO add ARM support
-#ifndef __x86_64__
-#ifndef __i386__
-#warning "This software has only been tested when compiled to x86"
-#endif
+#if !defined(__x86_64__) && !defined(__i386__)
+#warning "This software has only been tested when compiled to x86."
 #endif
 
 // TODO maybe clean these up
