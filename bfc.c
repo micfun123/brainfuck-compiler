@@ -78,6 +78,7 @@ int get_file_contents(const char* path, char** buffer)
     if(num_instructions != num_characters)
     {
         *buffer = realloc(*buffer, num_instructions + 1);
+        CASSERT_MSG_CLEANUP(buffer != NULL, "", goto CLEANUP);
     }
 
     fclose(fp);
