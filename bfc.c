@@ -1,6 +1,7 @@
 #include "bfc.h"
 
 // TODO test on clang
+// TODO test on TCC
 #ifndef __GNUC__
 #warning "This software has only been built and tested with GCC."
 #endif
