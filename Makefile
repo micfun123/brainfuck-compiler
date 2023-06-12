@@ -8,5 +8,11 @@ all:
 debug: CFLAGS += -ggdb -DDEBUG
 debug: all
 
+test: CFLAGS += -DTEST
+test: all
+
+test-debug: CFLAGS += -ggdb -DDEBUG -DTEST
+test-debug: all
+
 clean:
 	rm -f $(OUT)
