@@ -75,7 +75,8 @@ int get_file_contents(const char* path, char** buffer)
     int num_characters = ftell(fp);
     fseek(fp, 0, SEEK_SET);
     *buffer = calloc(num_characters + 1, 1);
-    CASSERT_MSG_CLEANUP(buffer != NULL, "", goto CLEANUP);
+
+    CASSERT_MSG_CLEANUP(buffer != NULL, "Failed calloc() when reading file contents", goto CLEANUP);
 
     int num_instructions = 0;
     char c;
@@ -94,7 +95,7 @@ int get_file_contents(const char* path, char** buffer)
     if(num_instructions != num_characters)
     {
         *buffer = realloc(*buffer, num_instructions + 1);
-        CASSERT_MSG_CLEANUP(buffer != NULL, "", goto CLEANUP);
+        CASSERT_MSG_CLEANUP(buffer != NULL, "Failed realloc() when reading file contents.", goto CLEANUP);
     }
 
     fclose(fp);
