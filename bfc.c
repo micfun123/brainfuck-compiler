@@ -16,6 +16,11 @@
 #warning "This software has only been tested when compiled to x86."
 #endif
 
+// TODO remove later
+#if !defined(DEBUG) && !defined(TEST)
+#warning "You are compiling a non-debug and non-test version of WIP software. Do not expect a working product."
+#endif
+
 #if defined(CASSERT)
     #undef CASSERT
 #endif
