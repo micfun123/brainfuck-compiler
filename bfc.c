@@ -17,15 +17,15 @@
 #endif
 
 // TODO maybe clean these up
-#if defined(CASSERT)
-    #undef CASSERT
+#if defined(CCHECK)
+    #undef CCHECK
 #endif
-#define CASSERT(exp)                         CASSERT_PRNT_CLEANUP(exp, fprintf(stderr,"%s:%d failed assertion '%s'\n",__FILE__,__LINE__,#exp), exit(1))
-#define CASSERT_CLEANUP(exp,cleanup)         CASSERT_PRNT_CLEANUP(exp, fprintf(stderr,"%s:%d failed assertion '%s'\n",__FILE__,__LINE__,#exp), cleanup)
-#define CASSERT_MSG(exp,msg)                 CASSERT_PRNT_CLEANUP(exp, fprintf(stderr,"%s\n",msg),                                             exit(1))
-#define CASSERT_MSG_CLEANUP(exp,msg,cleanup) CASSERT_PRNT_CLEANUP(exp, fprintf(stderr,"%s\n",msg),                                             cleanup)
-#define CASSERT_PRNT(exp,prnt)               CASSERT_PRNT_CLEANUP(exp, prnt,                                                                   exit(1))
-#define CASSERT_PRNT_CLEANUP(exp,prnt,cleanup) \
+#define CCHECK(exp)                         CCHECK_PRNT_CLEANUP(exp, fprintf(stderr,"%s:%d failed assertion '%s'\n",__FILE__,__LINE__,#exp), exit(1))
+#define CCHECK_CLEANUP(exp,cleanup)         CCHECK_PRNT_CLEANUP(exp, fprintf(stderr,"%s:%d failed assertion '%s'\n",__FILE__,__LINE__,#exp), cleanup)
+#define CCHECK_MSG(exp,msg)                 CCHECK_PRNT_CLEANUP(exp, fprintf(stderr,"%s\n",msg),                                             exit(1))
+#define CCHECK_MSG_CLEANUP(exp,msg,cleanup) CCHECK_PRNT_CLEANUP(exp, fprintf(stderr,"%s\n",msg),                                             cleanup)
+#define CCHECK_PRNT(exp,prnt)               CCHECK_PRNT_CLEANUP(exp, prnt,                                                                   exit(1))
+#define CCHECK_PRNT_CLEANUP(exp,prnt,cleanup) \
  do { \
      if( !(exp) ) { \
          prnt; \
@@ -40,14 +40,14 @@ int main(int argc, char* argv[])
 {
     char* buffer = NULL;
 
-    CASSERT_MSG(argc == 2, "Usage: bfc <INPUT_FILE>");
+    CCHECK_MSG(argc == 2, "Usage: bfc <INPUT_FILE>");
 
     size_t path_length = strlen(argv[1]);
-    CASSERT_PRNT(path_length > 3, fprintf(stderr, "'%s' is not a brainfuck source file\n", argv[1]));
-    CASSERT_PRNT(strcmp(argv[1] + (path_length - 3), ".bf") == 0, fprintf(stderr, "'%s' is not a brainfuck source file\n", argv[1]));
+    CCHECK_PRNT(path_length > 3, fprintf(stderr, "'%s' is not a brainfuck source file\n", argv[1]));
+    CCHECK_PRNT(strcmp(argv[1] + (path_length - 3), ".bf") == 0, fprintf(stderr, "'%s' is not a brainfuck source file\n", argv[1]));
 
     int result = get_file_contents(argv[1], &buffer);
-    CASSERT_PRNT_CLEANUP(result >= 0, fprintf(stderr, "Unable to open file '%s'\n", argv[1]), goto CLEANUP);
+    CCHECK_PRNT_CLEANUP(result >= 0, fprintf(stderr, "Unable to open file '%s'\n", argv[1]), goto CLEANUP);
 
     #if defined(DEBUG)
         printf("Source: %s\n", buffer);
@@ -76,7 +76,7 @@ int get_file_contents(const char* path, char** buffer)
     fseek(fp, 0, SEEK_SET);
     *buffer = calloc(num_characters + 1, 1);
 
-    CASSERT_MSG_CLEANUP(buffer != NULL, "Failed calloc() when reading file contents", goto CLEANUP);
+    CCHECK_MSG_CLEANUP(buffer != NULL, "Failed calloc() when reading file contents", goto CLEANUP);
 
     int num_instructions = 0;
     char c;
@@ -95,7 +95,7 @@ int get_file_contents(const char* path, char** buffer)
     if(num_instructions != num_characters)
     {
         *buffer = realloc(*buffer, num_instructions + 1);
-        CASSERT_MSG_CLEANUP(buffer != NULL, "Failed realloc() when reading file contents.", goto CLEANUP);
+        CCHECK_MSG_CLEANUP(buffer != NULL, "Failed realloc() when reading file contents.", goto CLEANUP);
     }
 
     fclose(fp);
