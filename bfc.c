@@ -27,11 +27,11 @@
 #define CASSERT(exp)         CASSERT_PRNT_CLEANUP(exp, fprintf(stderr,"%s:%d failed assertion '%s'\n",__FILE__,__LINE__,#exp))
 #define CASSERT_MSG(exp,msg) CASSERT_PRNT_CLEANUP(exp, fprintf(stderr,"%s\n",msg))
 #define CASSERT_PRNT(exp,prnt) \
- do { \
-     if( !(exp) ) { \
-         prnt; \
-     } \
- } while(0)
+do { \
+    if( !(exp) ) { \
+        prnt; \
+    } \
+} while(0)
 
 // TODO maybe clean these up
 #if defined(CCHECK)
@@ -43,12 +43,16 @@
 #define CCHECK_MSG_CLEANUP(exp,msg,cleanup) CCHECK_PRNT_CLEANUP(exp, fprintf(stderr,"%s\n",msg),                                         cleanup)
 #define CCHECK_PRNT(exp,prnt)               CCHECK_PRNT_CLEANUP(exp, prnt,                                                               exit(1))
 #define CCHECK_PRNT_CLEANUP(exp,prnt,cleanup) \
- do { \
-     if( !(exp) ) { \
-         prnt; \
-         cleanup; \
-     } \
- } while(0)
+do { \
+    if( !(exp) ) { \
+        prnt; \
+        cleanup; \
+    } \
+} while(0)
+
+#if defined(DEBUG)
+const char* TOKEN_NAMES[] = {"ADD", "SUB", "SL", "SR", "IN", "OUT", "OPEN", "CLOSE"};
+#endif
 
 #define NUM_VALID_CHARS 8
 const char valid_characters[NUM_VALID_CHARS] = "+-<>,.[]";
@@ -83,22 +87,35 @@ int main(int argc, char* argv[])
     CCHECK_PRNT(path_length > 3, fprintf(stderr, "'%s' is not a brainfuck source file\n", argv[1]));
     CCHECK_PRNT(strcmp(argv[1] + (path_length - 3), ".bf") == 0, fprintf(stderr, "'%s' is not a brainfuck source file\n", argv[1]));
 
-    int num_instructions = get_file_contents(argv[1], &buffer);
+    long num_instructions = get_file_contents(argv[1], &buffer);
     CCHECK_PRNT_CLEANUP(num_instructions >= 0, fprintf(stderr, "Unable to open file '%s'\n", argv[1]), goto CLEANUP);
 
     #if defined(DEBUG)
         printf("Source: %s\n", buffer);
     #endif
 
+    Token* tokens = tokenize(buffer, num_instructions);
+    CCHECK_PRNT_CLEANUP(tokens != NULL, fprintf(stderr, "Failed to tokenize content from file '%s'\n", argv[1]), goto CLEANUP);
+
+    #if defined(DEBUG)
+        printf("Tokens: \n");
+        for(long i = 0; i < num_instructions; i++)
+        {
+            printf("  %s\n", TOKEN_NAMES[tokens[i]]);
+        }
+    #endif
+
     exit_code = EXIT_SUCCESS;
-CLEANUP:
+    CLEANUP:
     free(buffer);
     return exit_code;
 }
 
-size_t get_file_contents(const char* path, char** buffer)
+// TODO This returns a long so that we can use negative integers for error codes and
+//      still have large sized inputs. There is probably a much better way to do this.
+long get_file_contents(const char* path, char** buffer)
 {
-    int return_val = -1;
+    long return_val = -1;
 
     FILE* fp = NULL;
 
@@ -109,13 +126,13 @@ size_t get_file_contents(const char* path, char** buffer)
     }
 
     fseek(fp, 0, SEEK_END);
-    size_t num_characters = ftell(fp);
+    long num_characters = ftell(fp);
     fseek(fp, 0, SEEK_SET);
     *buffer = calloc(num_characters + 1, 1);
 
     CCHECK_MSG_CLEANUP(buffer != NULL, "Failed calloc() when reading file contents", goto ABORT);
 
-    size_t num_instructions = 0;
+    long num_instructions = 0;
     char c;
     while( (c = fgetc(fp)) != EOF)
     {
@@ -136,7 +153,53 @@ size_t get_file_contents(const char* path, char** buffer)
     }
 
     return_val = num_instructions;
-ABORT:
+    ABORT:
     fclose(fp);
+    return return_val;
+}
+
+Token* tokenize(const char* buffer, long size)
+{
+    Token* return_val = NULL;
+
+    Token* tokens = malloc(sizeof(Token) * size);
+    CCHECK_MSG_CLEANUP(tokens != NULL, "Failed to malloc tokens.", goto ABORT);
+
+    for(long i = 0; i < size; i++)
+    {
+        // TODO surely there is a better way to go about this than a switch...
+        switch(buffer[i])
+        {
+        case '+':
+            tokens[i] = ADD;
+            break;
+        case '-':
+            tokens[i] = SUB;
+            break;
+        case '<':
+            tokens[i] = SHIFT_L;
+            break;
+        case '>':
+            tokens[i] = SHIFT_R;
+            break;
+        case ',':
+            tokens[i] = INPUT;
+            break;
+        case '.':
+            tokens[i] = OUTPUT;
+            break;
+        case '[':
+            tokens[i] = OPEN_LOOP;
+            break;
+        case ']':
+            tokens[i] = CLOSE_LOOP;
+            break;
+        default: // WE SHOULD NEVER GET HERE. If we do, we will force an error.
+            CCHECK_MSG_CLEANUP(false, "Invalid character reached tokenizer.", goto ABORT);
+        }
+    }
+
+    return_val = tokens;
+    ABORT:
     return return_val;
 }
