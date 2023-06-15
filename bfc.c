@@ -51,7 +51,7 @@
  } while(0)
 
 #define NUM_VALID_CHARS 8
-const char valid_characters[NUM_VALID_CHARS] = "<>+-[].,";
+const char valid_characters[NUM_VALID_CHARS] = "+-<>,.[]";
 
 // CODE STYLE IS SIMPLE
 //   Each function has an integer variable called exit_code that is returned every time.
@@ -83,8 +83,8 @@ int main(int argc, char* argv[])
     CCHECK_PRNT(path_length > 3, fprintf(stderr, "'%s' is not a brainfuck source file\n", argv[1]));
     CCHECK_PRNT(strcmp(argv[1] + (path_length - 3), ".bf") == 0, fprintf(stderr, "'%s' is not a brainfuck source file\n", argv[1]));
 
-    int result = get_file_contents(argv[1], &buffer);
-    CCHECK_PRNT_CLEANUP(result >= 0, fprintf(stderr, "Unable to open file '%s'\n", argv[1]), goto CLEANUP);
+    int num_instructions = get_file_contents(argv[1], &buffer);
+    CCHECK_PRNT_CLEANUP(num_instructions >= 0, fprintf(stderr, "Unable to open file '%s'\n", argv[1]), goto CLEANUP);
 
     #if defined(DEBUG)
         printf("Source: %s\n", buffer);
@@ -96,7 +96,7 @@ CLEANUP:
     return exit_code;
 }
 
-int get_file_contents(const char* path, char** buffer)
+size_t get_file_contents(const char* path, char** buffer)
 {
     int return_val = -1;
 
@@ -109,17 +109,17 @@ int get_file_contents(const char* path, char** buffer)
     }
 
     fseek(fp, 0, SEEK_END);
-    int num_characters = ftell(fp);
+    size_t num_characters = ftell(fp);
     fseek(fp, 0, SEEK_SET);
     *buffer = calloc(num_characters + 1, 1);
 
     CCHECK_MSG_CLEANUP(buffer != NULL, "Failed calloc() when reading file contents", goto ABORT);
 
-    int num_instructions = 0;
+    size_t num_instructions = 0;
     char c;
     while( (c = fgetc(fp)) != EOF)
     {
-        for(int i = 0; i < NUM_VALID_CHARS; i++)
+        for(size_t i = 0; i < NUM_VALID_CHARS; i++)
         {
             if(c == valid_characters[i])
             {
