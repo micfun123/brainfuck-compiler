@@ -164,7 +164,7 @@ Token* tokenize(const char* buffer, size_t size)
     Token* tokens = malloc(sizeof(Token) * size);
     CCHECK_MSG_CLEANUP(tokens != NULL, "Failed to malloc tokens.", goto ABORT);
 
-    for(long i = 0; i < size; i++)
+    for(size_t i = 0; i < size; i++)
     {
         // TODO surely there is a better way to go about this than a switch...
         switch(buffer[i])
