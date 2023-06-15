@@ -8,7 +8,7 @@
 
 // TODO test on windows with mingw
 #ifndef __unix__
-#warning "This software has only been tested on a Unix system."
+#warning "This software has only been tested on a Unix-like system."
 #endif
 
 // TODO add ARM support
