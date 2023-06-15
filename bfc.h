@@ -9,12 +9,13 @@
 
 // Get all valid instructions from a brainfuck source
 // file specified by "path", then store said instructions
-// into specified "buffer". Returns the amount of valid
-// instructions read or -1 on failure.
+// into a buffer that is then returned. Returns NULL on
+// failure. The `num_instructions` pointer has its data
+// modified.
 // 
 // THIS METHOD ALLOCATES MEMORY TO THE BUFFER PARAMETER
 // AND THIS MEMORY MUST BE FREED BY THE USER
-long get_file_contents(const char* path, char** buffer);
+char* get_file_contents(const char* path, size_t* num_instructions);
 
 typedef enum
 {
@@ -32,6 +33,6 @@ typedef enum
 // on the characters within `buffer` (which is also of size `size`)
 // 
 // Returns token array on success, null on failure.
-Token* tokenize(const char* buffer, long size);
+Token* tokenize(const char* buffer, size_t size);
 
 #endif
