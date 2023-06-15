@@ -57,7 +57,7 @@ const char* TOKEN_NAMES[] = {"ADD", "SUB", "SL", "SR", "IN", "OUT", "OPEN", "CLO
 #define NUM_VALID_CHARS 8
 const char valid_characters[NUM_VALID_CHARS] = "+-<>,.[]";
 
-// CODE STYLE IS SIMPLE
+// CODE STYLE
 //   Each function has an integer variable called exit_code that is returned every time.
 //   The exit code should have a default failure value. When things fail unexpectedly,
 //   a CCHECK should be used to report the error and use a `goto` to skip any logic that

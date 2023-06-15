@@ -18,16 +18,17 @@ long get_file_contents(const char* path, char** buffer);
 
 typedef enum
 {
-    ADD,    // +
-    SUB,    // -
-    SHIFT_L,     // <
-    SHIFT_R,     // >
-    INPUT,     // ,
-    OUTPUT,    // .
-    OPEN_LOOP,   // [
-    CLOSE_LOOP   // ]
+    ADD,        // +
+    SUB,        // -
+    SHIFT_L,    // <
+    SHIFT_R,    // >
+    INPUT,      // ,
+    OUTPUT,     // .
+    OPEN_LOOP,  // [
+    CLOSE_LOOP  // ]
 } Token;
 
+// 
 Token* tokenize(const char* buffer, long size);
 
 #endif
