@@ -22,7 +22,7 @@
 #endif
 
 #if defined(CASSERT)
-    #undef CASSERT
+#undef CASSERT
 #endif
 #define CASSERT(exp)         CASSERT_PRNT_CLEANUP(exp, fprintf(stderr,"%s:%d failed assertion '%s'\n",__FILE__,__LINE__,#exp))
 #define CASSERT_MSG(exp,msg) CASSERT_PRNT_CLEANUP(exp, fprintf(stderr,"%s\n",msg))
@@ -35,7 +35,7 @@ do { \
 
 // TODO maybe clean these up
 #if defined(CCHECK)
-    #undef CCHECK
+#undef CCHECK
 #endif
 #define CCHECK(exp)                         CCHECK_PRNT_CLEANUP(exp, fprintf(stderr,"%s:%d failed check '%s'\n",__FILE__,__LINE__,#exp), exit(1))
 #define CCHECK_CLEANUP(exp,cleanup)         CCHECK_PRNT_CLEANUP(exp, fprintf(stderr,"%s:%d failed check '%s'\n",__FILE__,__LINE__,#exp), cleanup)
