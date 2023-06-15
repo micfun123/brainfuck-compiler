@@ -80,6 +80,7 @@ int main(int argc, char* argv[])
     int exit_code = EXIT_FAILURE;
 
     char* buffer = NULL;
+    Token* tokens = NULL;
 
     CCHECK_MSG(argc == 2, "Usage: bfc <INPUT_FILE>");
 
@@ -94,7 +95,7 @@ int main(int argc, char* argv[])
         printf("Source: %s\n", buffer);
     #endif
 
-    Token* tokens = tokenize(buffer, num_instructions);
+    tokens = tokenize(buffer, num_instructions);
     CCHECK_PRNT_CLEANUP(tokens != NULL, fprintf(stderr, "Failed to tokenize content from file '%s'\n", argv[1]), goto CLEANUP);
 
     #if defined(DEBUG)
@@ -108,6 +109,7 @@ int main(int argc, char* argv[])
     exit_code = EXIT_SUCCESS;
     CLEANUP:
     free(buffer);
+    free(tokens);
     return exit_code;
 }
 
