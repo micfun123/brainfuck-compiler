@@ -34,10 +34,4 @@ typedef enum
 // Returns token array on success, null on failure.
 Token* tokenize(const char* buffer, long size);
 
-// Optimize the instructions.
-// TODO Implement. Normally this isn't done with the tokens, but
-//      I feel it will probably be okay to do so here since
-//      brainfuck is such a simple language
-int optimize(Token* tokens, long size);
-
 #endif
