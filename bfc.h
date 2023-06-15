@@ -28,7 +28,8 @@ typedef enum
     CLOSE_LOOP  // ]
 } Token;
 
-// 
+// Allocate, then return an array of tokens of size `size` based
+// on the characters within `buffer` (which is also of size `size`)
 Token* tokenize(const char* buffer, long size);
 
 #endif
