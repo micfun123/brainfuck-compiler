@@ -17,22 +17,18 @@
 // AND THIS MEMORY MUST BE FREED BY THE USER
 char* get_file_contents(const char* path, size_t* num_instructions);
 
-typedef enum
-{
-    ADD,        // +
-    SUB,        // -
-    SHIFT_L,    // <
-    SHIFT_R,    // >
-    INPUT,      // ,
-    OUTPUT,     // .
-    OPEN_LOOP,  // [
-    CLOSE_LOOP  // ]
-} Token;
-
-// Allocate, then return an array of tokens of size `size` based
-// on the characters within `buffer` (which is also of size `size`)
-// 
-// Returns token array on success, null on failure.
-Token* tokenize(const char* buffer, size_t size);
+// Tokens
+// Why typedef + macros and not enum:
+//   I would like each char's integer value to be assigned a name.
+//   Why use an enum when I assigning every value anyways? At that
+//   point it might might as well be a macro.
+#define TOK_INC    '+'
+#define TOK_DEC    '-'
+#define TOK_LSHFT  '<'
+#define TOK_RSHFT  '>'
+#define TOK_IN     ','
+#define TOK_OUT    '.'
+#define TOK_OPEN   '['
+#define TOK_CLOSE  ']'
 
 #endif

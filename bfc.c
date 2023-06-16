@@ -50,12 +50,11 @@ do { \
     } \
 } while(0)
 
+#define NUM_VALID_CHARS 8
+const char valid_characters[NUM_VALID_CHARS] = {TOK_INC, TOK_DEC, TOK_LSHFT, TOK_RSHFT, TOK_IN, TOK_OUT, TOK_OPEN, TOK_CLOSE};
 #if defined(DEBUG)
 const char* TOKEN_NAMES[] = {"ADD", "SUB", "SL", "SR", "IN", "OUT", "OPEN", "CLOSE"};
 #endif
-
-#define NUM_VALID_CHARS 8
-const char valid_characters[NUM_VALID_CHARS] = "+-<>,.[]";
 
 // CODE STYLE
 //   Each function has an integer variable called exit_code that is returned every time.
@@ -79,8 +78,7 @@ int main(int argc, char* argv[])
 {
     int exit_code = EXIT_FAILURE;
 
-    char* buffer = NULL;
-    Token* tokens = NULL;
+    char* tokens = NULL;
 
     CCHECK_MSG(argc == 2, "Usage: bfc <INPUT_FILE>");
 
@@ -89,27 +87,25 @@ int main(int argc, char* argv[])
     CCHECK_PRNT(strcmp(argv[1] + (path_length - 3), ".bf") == 0, fprintf(stderr, "'%s' is not a brainfuck source file\n", argv[1]));
 
     size_t num_instructions = 0;
-    buffer = get_file_contents(argv[1], &num_instructions);
-    CCHECK_PRNT_CLEANUP(buffer != NULL, fprintf(stderr, "Failed to grab file contents from '%s'\n", argv[1]), goto CLEANUP);
+    tokens = get_file_contents(argv[1], &num_instructions);
+    CCHECK_PRNT_CLEANUP(tokens != NULL, fprintf(stderr, "Failed to grab file contents from '%s'\n", argv[1]), goto CLEANUP);
 
     #if defined(DEBUG)
-        printf("Source: %s\n", buffer);
-    #endif
-
-    tokens = tokenize(buffer, num_instructions);
-    CCHECK_PRNT_CLEANUP(tokens != NULL, fprintf(stderr, "Failed to tokenize content from file '%s'\n", argv[1]), goto CLEANUP);
-
-    #if defined(DEBUG)
-        printf("Tokens: \n");
+        printf("Source: %s\n", tokens);
         for(size_t i = 0; i < num_instructions; i++)
         {
-            printf("  %s\n", TOKEN_NAMES[tokens[i]]);
+            for(int j = 0; j < NUM_VALID_CHARS; j++)
+            {
+                if(tokens[i] == valid_characters[j])
+                {
+                    printf("%s\n", TOKEN_NAMES[j]);
+                }
+            }
         }
     #endif
 
     exit_code = EXIT_SUCCESS;
     CLEANUP:
-    free(buffer);
     free(tokens);
     return exit_code;
 }
@@ -154,51 +150,5 @@ char* get_file_contents(const char* path, size_t* num_instructions)
     return_val = buffer;
     ABORT:
     fclose(fp);
-    return return_val;
-}
-
-Token* tokenize(const char* buffer, size_t size)
-{
-    Token* return_val = NULL;
-
-    Token* tokens = malloc(sizeof(Token) * size);
-    CCHECK_MSG_CLEANUP(tokens != NULL, "Failed to malloc tokens.", goto ABORT);
-
-    for(size_t i = 0; i < size; i++)
-    {
-        // TODO surely there is a better way to go about this than a switch...
-        switch(buffer[i])
-        {
-        case '+':
-            tokens[i] = ADD;
-            break;
-        case '-':
-            tokens[i] = SUB;
-            break;
-        case '<':
-            tokens[i] = SHIFT_L;
-            break;
-        case '>':
-            tokens[i] = SHIFT_R;
-            break;
-        case ',':
-            tokens[i] = INPUT;
-            break;
-        case '.':
-            tokens[i] = OUTPUT;
-            break;
-        case '[':
-            tokens[i] = OPEN_LOOP;
-            break;
-        case ']':
-            tokens[i] = CLOSE_LOOP;
-            break;
-        default: // WE SHOULD NEVER GET HERE. If we do, we will force an error.
-            CCHECK_MSG_CLEANUP(false, "Invalid character reached tokenizer.", goto ABORT);
-        }
-    }
-
-    return_val = tokens;
-    ABORT:
     return return_val;
 }
