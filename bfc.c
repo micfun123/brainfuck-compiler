@@ -11,21 +11,21 @@
 #warning "This software has only been tested on a Unix-like system."
 #endif
 
-// TODO add ARM support
+// TODO test for ARM
 #if !defined(__x86_64__) && !defined(__i386__)
 #warning "This software has only been tested when compiled to x86."
 #endif
 
 // TODO remove later
 #if !defined(DEBUG) && !defined(TEST)
-#warning "You are compiling a non-debug and non-test version of WIP software. Do not expect a working product."
+#warning "You are compiling a non-debug and non-test version of WIP software. Currently, it will do nothing. Please build under debug to see the output"
 #endif
 
 #if defined(CASSERT)
 #undef CASSERT
 #endif
-#define CASSERT(exp)         CASSERT_PRNT_CLEANUP(exp, fprintf(stderr,"%s:%d failed assertion '%s'\n",__FILE__,__LINE__,#exp))
-#define CASSERT_MSG(exp,msg) CASSERT_PRNT_CLEANUP(exp, fprintf(stderr,"%s\n",msg))
+#define CASSERT(exp)         CASSERT_PRNT(exp, fprintf(stderr,"%s:%d failed assertion '%s'\n",__FILE__,__LINE__,#exp))
+#define CASSERT_MSG(exp,msg) CASSERT_PRNT(exp, fprintf(stderr,"%s\n",msg))
 #define CASSERT_PRNT(exp,prnt) \
 do { \
     if( !(exp) ) { \
@@ -33,7 +33,6 @@ do { \
     } \
 } while(0)
 
-// TODO maybe clean these up
 #if defined(CCHECK)
 #undef CCHECK
 #endif
@@ -50,11 +49,28 @@ do { \
     } \
 } while(0)
 
+// Tokens
+// Why typedef + macros and not enum:
+//   I would like each char's integer value to be assigned a name.
+//   Why use an enum when I assigning every value anyways? At that
+//   point it might might as well be a macro.
+#define TOK_INC    '+'
+#define TOK_DEC    '-'
+#define TOK_LSHFT  '<'
+#define TOK_RSHFT  '>'
+#define TOK_IN     ','
+#define TOK_OUT    '.'
+#define TOK_OPEN   '['
+#define TOK_CLOSE  ']'
+
 #define NUM_VALID_CHARS 8
 const char valid_characters[NUM_VALID_CHARS] = {TOK_INC, TOK_DEC, TOK_LSHFT, TOK_RSHFT, TOK_IN, TOK_OUT, TOK_OPEN, TOK_CLOSE};
+
 #if defined(DEBUG)
-const char* TOKEN_NAMES[] = {"ADD", "SUB", "SL", "SR", "IN", "OUT", "OPEN", "CLOSE"};
+const char* TOKEN_NAMES[] = {"ADD", "SUB", "LSHFT", "RSHFT", "IN", "OUT", "OPEN", "CLOSE"};
 #endif
+
+#define JMP_STACK_SIZE ( 1024 / sizeof(size_t) ) // We don't want more than a MB
 
 // CODE STYLE
 //   Each function has an integer variable called exit_code that is returned every time.
@@ -79,6 +95,7 @@ int main(int argc, char* argv[])
     int exit_code = EXIT_FAILURE;
 
     char* tokens = NULL;
+    Operation* operations = NULL;
 
     CCHECK_MSG(argc == 2, "Usage: bfc <INPUT_FILE>");
 
@@ -92,14 +109,48 @@ int main(int argc, char* argv[])
 
     #if defined(DEBUG)
         printf("Source: %s\n", tokens);
+        printf("Tokens:\n");
         for(size_t i = 0; i < num_instructions; i++)
         {
             for(int j = 0; j < NUM_VALID_CHARS; j++)
             {
                 if(tokens[i] == valid_characters[j])
                 {
-                    printf("%s\n", TOKEN_NAMES[j]);
+                    printf("  %s\n", TOKEN_NAMES[j]);
                 }
+            }
+        }
+    #endif
+
+    operations = generate_pseudo_instructions(tokens, &num_instructions);
+    CCHECK_MSG_CLEANUP(operations != NULL, "Failed to generate pseudo instructions", goto CLEANUP);
+
+    #if defined(DEBUG)
+        printf("Operations:\n");
+        for(size_t i = 0; i < num_instructions; i++)
+        {
+            printf("%u  %c", i, operations[i].token);
+            switch(operations[i].token)
+            {
+            case TOK_INC:
+            case TOK_DEC:
+            case TOK_LSHFT:
+            case TOK_RSHFT:
+                printf(": %u\n", operations[i].arg.value);
+                break;
+            case TOK_OPEN:
+                printf(": Label number %u\n", operations[i].arg.label);
+                break;
+            case TOK_CLOSE:
+                printf(": Jump to instruction %u\n", operations[i].arg.label);
+                break;
+            case TOK_IN:
+            case TOK_OUT:
+                printf("\n");
+                break;
+            default:
+                // Should not get here
+                CASSERT_MSG(false, "Invalid token somehow processed in `main()` during debug print.");
             }
         }
     #endif
@@ -107,10 +158,10 @@ int main(int argc, char* argv[])
     exit_code = EXIT_SUCCESS;
     CLEANUP:
     free(tokens);
+    free(operations);
     return exit_code;
 }
 
-// TODO Test this
 char* get_file_contents(const char* path, size_t* num_instructions)
 {
     char* return_val = NULL;
@@ -141,14 +192,62 @@ char* get_file_contents(const char* path, size_t* num_instructions)
         }
     }
 
-    if(*num_instructions != num_characters)
-    {
-        buffer = realloc(buffer, *num_instructions + 1);
-        CCHECK_MSG_CLEANUP(buffer != NULL, "Failed realloc() when reading file contents.", goto ABORT);
-    }
-
-    return_val = buffer;
+    return_val = realloc(buffer, *num_instructions);
+    CASSERT_MSG(return_val != NULL, "realloc failed in `get_file_contents()`");
     ABORT:
     fclose(fp);
+    return return_val;
+}
+
+Operation* generate_pseudo_instructions(char* tokens, size_t* num_instructions)
+{
+    Operation* return_val = NULL;
+    
+    Operation* code = malloc(sizeof(Operation) * (*num_instructions));
+    CCHECK_MSG_CLEANUP(code != NULL, "Failed malloc in optimize_tokens()", goto ABORT);
+    size_t jmp_stack[JMP_STACK_SIZE] = {0};
+
+    size_t instruction_idx = 0, jmp_stack_idx = 0, label_counter = 0;
+    for(size_t i = 0; i < *num_instructions; i++)
+    {
+        code[instruction_idx].token = tokens[i];
+        switch(tokens[i])
+        {
+        case TOK_INC:
+        case TOK_DEC:
+        case TOK_LSHFT:
+        case TOK_RSHFT:
+            code[instruction_idx].arg.value = 1;
+            while(tokens[i + 1] == tokens[i])
+            {
+                code[instruction_idx].arg.value++;
+                i++;
+            }
+            break;
+
+        case TOK_OPEN:
+            CCHECK_MSG_CLEANUP(jmp_stack_idx < JMP_STACK_SIZE, "There are more '[' tokens than there are ']'", goto ABORT);
+            code[instruction_idx].arg.label = label_counter++;
+            jmp_stack[jmp_stack_idx++] = instruction_idx + 1;
+            break;
+        case TOK_CLOSE:
+            CCHECK_MSG_CLEANUP(jmp_stack_idx > 0, "There are more ']' tokens than there are '['", goto ABORT);
+            code[instruction_idx].arg.label = jmp_stack[--jmp_stack_idx];
+            break;
+
+        case TOK_IN:
+        case TOK_OUT:
+            break;
+        default:
+            // Should not get here
+            CCHECK_PRNT_CLEANUP(false, fprintf(stderr, "Invalid token '%c' somehow processed in `generate_pseudo_instructions()`.", tokens[i]), goto ABORT);
+        }
+        instruction_idx++;
+    }
+
+    return_val = realloc(code, sizeof(Operation) * instruction_idx);
+    *num_instructions = instruction_idx;
+    CASSERT_MSG(return_val != NULL, "Failed realloc in `generate_pseudo_instructions()`");
+    ABORT:
     return return_val;
 }
