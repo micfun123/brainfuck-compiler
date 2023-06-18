@@ -169,14 +169,14 @@ char* get_file_contents(const char* path, size_t* num_instructions)
     FILE* fp = NULL;
 
     fp = fopen(path, "r");
-    CCHECK_PRNT_CLEANUP(fp != NULL, fprintf(stderr, "Failed to open '%s' when attempting to read file contents", __FILE__), goto ABORT);
+    CCHECK_PRNT_CLEANUP(fp != NULL, fprintf(stderr, "Failed to open '%s' when attempting to read file contents\n", __FILE__), goto ABORT);
 
     fseek(fp, 0, SEEK_END);
     size_t num_characters = ftell(fp);
     fseek(fp, 0, SEEK_SET);
     char* buffer = calloc(num_characters + 1, 1);
 
-    CCHECK_MSG_CLEANUP(buffer != NULL, "Failed calloc() when reading file contents", goto ABORT);
+    CCHECK_MSG_CLEANUP(buffer != NULL, "Failed calloc() when reading file contents", goto CLOSE_FILE);
 
     *num_instructions = 0;
     char c;
@@ -194,8 +194,9 @@ char* get_file_contents(const char* path, size_t* num_instructions)
 
     return_val = realloc(buffer, *num_instructions);
     CASSERT_MSG(return_val != NULL, "realloc failed in `get_file_contents()`");
-    ABORT:
+    CLOSE_FILE:
     fclose(fp);
+    ABORT:
     return return_val;
 }
 
@@ -240,7 +241,7 @@ Operation* generate_pseudo_instructions(char* tokens, size_t* num_instructions)
             break;
         default:
             // Should not get here
-            CCHECK_PRNT_CLEANUP(false, fprintf(stderr, "Invalid token '%c' somehow processed in `generate_pseudo_instructions()`.", tokens[i]), goto ABORT);
+            CCHECK_PRNT_CLEANUP(false, fprintf(stderr, "Invalid token '%c' somehow processed in `generate_pseudo_instructions()`\n", tokens[i]), goto ABORT);
         }
         instruction_idx++;
     }
